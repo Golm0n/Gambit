@@ -27,26 +27,17 @@
             justify-content: center;
             min-height: 100vh;
             overflow: hidden;
-            transition: background-color 0.2s;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            text-shadow: 0 0 20px var(--primary);
-            margin-bottom: 20px;
-            text-align: center;
         }
 
         .roulette-container {
             position: relative;
-            width: 90vw;
-            max-width: 900px;
+            width: 100vw;
             height: 160px;
             background: var(--card-bg);
-            border: 5px solid #333;
-            border-radius: 15px;
+            border-top: 5px solid #333;
+            border-bottom: 5px solid #333;
             overflow: hidden;
-            box-shadow: 0 0 60px rgba(255, 102, 0, 0.1);
+            margin: 20px 0;
         }
 
         .marker {
@@ -67,6 +58,7 @@
             left: 0;
             top: 10px;
             transition: transform 8s cubic-bezier(0.1, 0, 0.05, 1);
+            will-change: transform;
         }
 
         .opening-card {
@@ -86,7 +78,7 @@
             box-sizing: border-box;
         }
 
-        .opening-name { font-size: 0.8rem; margin-top: 10px; text-transform: uppercase; }
+        .opening-name { font-size: 0.8rem; margin-top: 10px; text-transform: uppercase; overflow: hidden; }
         .opening-icon { font-size: 2.5rem; }
 
         .rare { border-bottom-color: var(--rare); }
@@ -96,74 +88,41 @@
 
         #move-sequence {
             position: fixed;
-            font-size: 4rem;
-            color: #fff;
-            font-style: italic;
+            top: 20%;
+            font-size: 5rem;
+            font-weight: 900;
             z-index: 200;
             display: none;
-            text-shadow: 0 0 20px rgba(255,255,255,0.5);
             pointer-events: none;
-            text-align: center;
         }
 
-        .controls {
-            margin-top: 40px;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .btn-spin {
-            padding: 20px 50px;
-            font-size: 1.5rem;
-            background: linear-gradient(45deg, #444, #222);
-            border: 2px solid #555;
-            color: white;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .btn-spin:hover { background: #333; transform: scale(1.05); }
-
-        #winBtn {
-            padding: 10px 20px;
-            font-size: 0.9rem;
-            background: transparent;
-            border: 1px solid #333;
-            color: #333;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        #winBtn:hover {
-            color: var(--primary);
-            border-color: var(--primary);
-        }
+        .controls { display: flex; gap: 20px; align-items: center; margin-top: 30px; }
+        .btn-spin { padding: 20px 40px; font-size: 1.5rem; background: #fff; color: #000; border: none; border-radius: 5px; cursor: pointer; font-family: inherit; }
+        #winBtn { background: transparent; border: 1px solid #222; color: #222; padding: 10px; cursor: pointer; border-radius: 5px; }
+        #winBtn:hover { color: var(--primary); border-color: var(--primary); }
 
         #victory {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.98);
+            background: rgba(0,0,0,0.95);
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 300;
-            text-align: center;
         }
 
-        .shake { animation: shake 0.12s infinite; }
+        .shake { animation: shake 0.1s infinite; }
         @keyframes shake {
-            0% { transform: translate(3px, 3px); }
-            50% { transform: translate(-3px, -3px); }
-            100% { transform: translate(3px, -3px); }
+            0% { transform: translate(2px, 2px); }
+            50% { transform: translate(-2px, -2px); }
+            100% { transform: translate(2px, -2px); }
         }
     </style>
 </head>
-<body id="main">
+<body>
 
-    <h1 id="mainTitle">OPENING ROULETTE</h1>
+    <h1 style="letter-spacing: -2px;">CHESS ROULETTE</h1>
 
     <div class="roulette-container">
         <div class="marker"></div>
@@ -178,9 +137,9 @@
     <div id="move-sequence"></div>
 
     <div id="victory">
-        <h2 id="vicName" style="font-size: 4rem; color: var(--primary); margin: 0;"></h2>
-        <p id="vicMoves" style="font-size: 1.8rem; color: #aaa;"></p>
-        <button onclick="location.reload()" style="padding: 15px 30px; margin-top: 30px; cursor:pointer;">REPLAY</button>
+        <h2 id="vicName" style="font-size: 5rem; margin: 0; text-align: center;"></h2>
+        <p id="vicMoves" style="font-size: 2rem; color: #888;"></p>
+        <button onclick="location.reload()" style="padding: 15px 30px; cursor:pointer; font-family: inherit;">RETRY</button>
     </div>
 
     <script>
@@ -196,103 +155,85 @@
         const halloween = { n: "HALLOWEEN GAMBIT", i: "🎃", r: "gambit", m: ["1. e4", "1... e5", "2. Nf3", "2... Nc6", "3. Nc3", "3... Nf6", "4. Nxe5!!"] };
 
         const strip = document.getElementById('strip');
-        const moveSeq = document.getElementById('move-sequence');
-        const cardWidth = 190; 
-        const winIndex = 80; // La carte qui s'arrêtera au milieu
+        const cardWidth = 190; // 180px + 10px margin
+        const winIndex = 70; // Position de la carte gagnante dans la liste
 
-        // Remplissage initial de la roulette
         function init() {
+            strip.innerHTML = '';
             for(let i=0; i<100; i++) {
                 const op = openings[Math.floor(Math.random()*openings.length)];
-                addCard(op);
+                const card = document.createElement('div');
+                card.className = `opening-card ${op.r}`;
+                card.innerHTML = `<div class="opening-icon">${op.i}</div><div class="opening-name">${op.n}</div>`;
+                strip.appendChild(card);
             }
-        }
-
-        function addCard(op) {
-            const card = document.createElement('div');
-            card.className = `opening-card ${op.r}`;
-            card.innerHTML = `<div class="opening-icon">${op.i}</div><div class="opening-name">${op.n}</div>`;
-            strip.appendChild(card);
         }
 
         function startSpin(forceWin) {
             document.getElementById('spinBtn').disabled = true;
-            document.getElementById('winBtn').style.display = 'none';
-            
-            // Choix du gagnant
-            let winner;
-            if (forceWin) {
-                winner = halloween;
-            } else {
-                // 10% de chance d'avoir le Halloween naturellement, sinon un au pif
-                winner = Math.random() > 0.9 ? halloween : openings[Math.floor(Math.random()*openings.length)];
-            }
+            document.getElementById('winBtn').style.visibility = 'hidden';
 
-            // Injecter le gagnant à la position cible
-            const winCard = strip.children[winIndex];
-            winCard.className = `opening-card ${winner.r}`;
-            winCard.innerHTML = `<div class="opening-icon">${winner.i}</div><div class="opening-name">${winner.n}</div>`;
+            // 1. Déterminer le vainqueur
+            const winner = forceWin ? halloween : (Math.random() > 0.9 ? halloween : openings[Math.floor(Math.random()*openings.length)]);
 
-            // Animation de la roulette
-            const offset = (winIndex * cardWidth) - (window.innerWidth / 2) + (cardWidth / 2);
-            strip.style.transform = `translateX(-${offset}px)`;
+            // 2. Injecter physiquement le vainqueur à l'emplacement exact où la roulette va s'arrêter
+            const targetCard = strip.children[winIndex];
+            targetCard.className = `opening-card ${winner.r}`;
+            targetCard.innerHTML = `<div class="opening-icon">${winner.i}</div><div class="opening-name">${winner.n}</div>`;
 
-            // Attendre la fin de l'animation pour les coups
-            setTimeout(() => showMoves(winner), 8200);
+            // 3. Calculer l'offset pour que la carte soit pile au centre
+            // window.innerWidth / 2 place le début du strip au milieu, on retire winIndex * cardWidth
+            const centerOffset = (window.innerWidth / 2) - (cardWidth / 2);
+            const finalPosition = (winIndex * cardWidth) - centerOffset;
+
+            strip.style.transform = `translateX(-${finalPosition}px)`;
+
+            // 4. Lancer la séquence de coups après l'arrêt (8 secondes correspond à la transition CSS)
+            setTimeout(() => playMoves(winner), 8000);
         }
 
-        function showMoves(winner) {
-            moveSeq.style.display = "block";
-            if(winner.r === 'gambit') {
-                moveSeq.style.color = "var(--primary)";
-                moveSeq.style.textShadow = "0 0 30px var(--primary)";
-            } else {
-                moveSeq.style.color = "#fff";
-                moveSeq.style.textShadow = "0 0 10px #fff";
-            }
-
+        function playMoves(winner) {
+            const moveDisplay = document.getElementById('move-sequence');
+            moveDisplay.style.display = "block";
+            
             let i = 0;
             const interval = setInterval(() => {
-                moveSeq.innerText = winner.m[i];
+                moveDisplay.innerText = winner.m[i];
                 
-                // Effet de secousse plus violent pour le Halloween
-                if(winner.r === 'gambit' || i > 3) {
+                // Animation selon rareté
+                if (winner.r === 'gambit') {
                     document.body.classList.add('shake');
-                }
-                
-                // Flash couleur
-                if(winner.r === 'gambit') {
-                    document.body.style.backgroundColor = i % 2 === 0 ? "#2a0a00" : "#050505";
+                    document.body.style.backgroundColor = i % 2 === 0 ? "#200" : "#050505";
+                    moveDisplay.style.color = "var(--primary)";
+                } else {
+                    moveDisplay.style.color = "#fff";
                 }
 
                 i++;
                 if(i >= winner.m.length) {
                     clearInterval(interval);
-                    setTimeout(() => triggerVictory(winner), 600);
+                    setTimeout(() => showVictory(winner), 800);
                 }
-            }, 500);
+            }, 600);
         }
 
-        function triggerVictory(winner) {
+        function showVictory(winner) {
             document.body.classList.remove('shake');
             document.body.style.backgroundColor = "#050505";
+            const vic = document.getElementById('victory');
+            const vicName = document.getElementById('vicName');
             
-            const vicDiv = document.getElementById('victory');
-            document.getElementById('vicName').innerText = winner.n;
-            document.getElementById('vicName').style.color = winner.r === 'gambit' ? 'var(--primary)' : 'var(--rare)';
+            vicName.innerText = winner.n;
+            vicName.style.color = (winner.r === 'gambit') ? "var(--primary)" : "var(--rare)";
             document.getElementById('vicMoves').innerText = winner.m.join(" ");
             
-            vicDiv.style.display = "flex";
-            
-            // Confettis
-            const count = winner.r === 'gambit' ? 200 : 50;
-            const colors = winner.r === 'gambit' ? ['#ff6600', '#9d00ff', '#ffffff'] : ['#4b69ff', '#ffffff'];
-            
+            vic.style.display = "flex";
+
             confetti({
-                particleCount: count,
+                particleCount: winner.r === 'gambit' ? 150 : 50,
                 spread: 70,
                 origin: { y: 0.6 },
-                colors: colors
+                colors: winner.r === 'gambit' ? ['#ff6600', '#9d00ff'] : ['#4b69ff', '#ffffff']
             });
         }
 
